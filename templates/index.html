@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -118,93 +119,92 @@
         }
 
         .processing-type {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 1rem;
-}
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
 
-.processing-type:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-    border-color: #4dabf7;
-}
+        .processing-type:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            border-color: #4dabf7;
+        }
 
-.processing-type::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(77, 171, 247, 0.1));
-    transform: rotate(45deg);
-    transition: all 0.5s ease;
-    opacity: 0;
-}
+        .processing-type::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(77, 171, 247, 0.1));
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
 
-.processing-type:hover::before {
-    opacity: 1;
-    top: 0;
-    left: 0;
-}
+        .processing-type:hover::before {
+            opacity: 1;
+            top: 0;
+            left: 0;
+        }
 
-.processing-icon {
-    width: 64px;
-    height: 64px;
-    background: #4dabf7;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-    transition: all 0.3s ease;
-}
+        .processing-icon {
+            width: 64px;
+            height: 64px;
+            background: #4dabf7;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            transition: all 0.3s ease;
+        }
 
-.processing-type:hover .processing-icon {
-    background: #228be6;
-    transform: scale(1.05);
-}
+        .processing-type:hover .processing-icon {
+            background: #228be6;
+            transform: scale(1.05);
+        }
 
-.processing-icon i {
-    color: white;
-    font-size: 1.75rem;
-}
+        .processing-icon i {
+            color: white;
+            font-size: 1.75rem;
+        }
 
-.processing-title {
-    color: #2b2d42;
-    margin-bottom: 0.75rem;
-    font-size: 1.15rem;
-    font-weight: 600;
-    transition: color 0.3s ease;
-}
+        .processing-title {
+            color: #2b2d42;
+            margin-bottom: 0.75rem;
+            font-size: 1.15rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
 
-.processing-description {
-    color: #6c757d;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 0;
-    min-height: 60px;
-}
+        .processing-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 0;
+            min-height: 60px;
+        }
 
-.processing-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(77, 171, 247, 0.1);
-    color: #228be6;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
+        .processing-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(77, 171, 247, 0.1);
+            color: #228be6;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -229,7 +229,7 @@
             <div class="row mt-3">
                 <div class="col">
                     <div id="originalImage" class="image-container text-center">
-                    
+
                     </div>
                 </div>
             </div>
@@ -278,7 +278,7 @@
                             <div class="processing-type" onclick="process('titik', 'contrast')">
                                 <span class="processing-badge">Aras Titik</span>
                                 <div class="processing-icon">
-                                    <i class="bi bi-contrast"></i>
+                                    <i class="bi bi-image"></i>
                                 </div>
                                 <h5 class="processing-title">Contrast</h5>
                                 <p class="processing-description">
@@ -290,7 +290,7 @@
                             <div class="processing-type" onclick="process('titik', 'threshold')">
                                 <span class="processing-badge">Aras Titik</span>
                                 <div class="processing-icon">
-                                    <i class="bi bi-contrast"></i>
+                                    <i class="bi bi-image"></i>
                                 </div>
                                 <h5 class="processing-title">Threshold</h5>
                                 <p class="processing-description">
@@ -1020,7 +1020,9 @@
                         input.addEventListener('input', e => {
                             valueDisplay.textContent = e.target.value;
                             if (document.getElementById('livePreviewToggle').checked) {
+                                requestLivePreview();
                                 clearTimeout(livePreviewTimeout);
+                                console.log(e.target.value);
                                 livePreviewTimeout = setTimeout(requestLivePreview, 300);
                             }
                         });
@@ -1047,7 +1049,49 @@
             new bootstrap.Modal(document.getElementById('parameterModal')).show();
         }
 
-        // Frontend: Optimasi request preview
+        // Fungsi untuk menangani response server
+        function handleResponse(response) {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        }
+
+        // Fungsi untuk menangani preview hasil processing
+        function handlePreview(data) {
+            if (data.success) {
+                document.getElementById('previewProcessed').innerHTML = `
+            <img src="data:image/png;base64,${data.gambar}" class="img-fluid">
+        `;
+            } else {
+                document.getElementById('previewProcessed').innerHTML = `
+            <div class="alert alert-danger">Gagal membuat preview: ${data.error}</div>
+        `;
+            }
+        }
+
+        // Fungsi untuk mengumpulkan parameter dengan konversi tipe data
+        function collectParameters() {
+            const form = document.getElementById('parameterForm');
+            const params = {};
+
+            Array.from(form.elements).forEach(element => {
+                if (element.name) {
+                    // Konversi tipe data sesuai kebutuhan
+                    if (element.type === 'range' || element.type === 'number') {
+                        params[element.name] = parseFloat(element.value);
+                    } else if (element.type === 'checkbox') {
+                        params[element.name] = element.checked;
+                    } else {
+                        params[element.name] = element.value;
+                    }
+                }
+            });
+
+            return params;
+        }
+
+        // Fungsi yang diperbarui untuk request preview
         function requestLivePreview() {
             if (!document.getElementById('livePreviewToggle').checked) return;
 
@@ -1056,19 +1100,63 @@
             fetch(`/preview/${currentProcessing.jenis}/${currentProcessing.teknik}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(params)
+                body: JSON.stringify({
+                    gambar: originalImageData,
+                    parameters: params
+                })
             })
                 .then(handleResponse)
-                .then(updatePreview)
-                .catch(handleError);
+                .then(handlePreview)
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('previewProcessed').innerHTML = `
+            <div class="alert alert-danger">Error saat memproses preview: ${error.message}</div>
+        `;
+                });
         }
 
+        // Fungsi yang diperbarui untuk mengirim parameter
         function submitParameters() {
-            const formData = new FormData(document.getElementById('parameterForm'));
-            const params = {};
-            formData.forEach((value, key) => params[key] = value);
-            sendProcessingRequest(params);
+            const params = collectParameters();
+
+            fetch(`/proses/${currentProcessing.jenis}/${currentProcessing.teknik}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    gambar: originalImageData,
+                    parameters: params
+                })
+            })
+                .then(handleResponse)
+                .then(data => {
+                    if (data.success) {
+                        addResultCard(data.gambar, data.penjelasan);
+                        new bootstrap.Modal(document.getElementById('parameterModal')).hide();
+                    } else {
+                        showAlert('danger', `Error: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', `Gagal memproses: ${error.message}`);
+                });
         }
+
+        // Fungsi untuk menangani error
+        function handleError(error) {
+            console.error('Error:', error);
+            showAlert('danger', `Terjadi kesalahan: ${error.message}`);
+        }
+
+        // Event listener untuk input parameter
+        document.querySelectorAll('#parameterForm input, #parameterForm select').forEach(element => {
+            element.addEventListener('input', () => {
+                if (document.getElementById('livePreviewToggle').checked) {
+                    clearTimeout(livePreviewTimeout);
+                    livePreviewTimeout = setTimeout(requestLivePreview, 300);
+                }
+            });
+        });
 
         function sendProcessingRequest(params) {
             fetch(`/proses/${currentProcessing.jenis}/${currentProcessing.teknik}`, {

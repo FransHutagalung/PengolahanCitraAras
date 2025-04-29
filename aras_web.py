@@ -1503,6 +1503,7 @@ def preview_gambar(jenis_aras, teknik):
             return jsonify({'error': 'Tidak ada gambar yang diunggah'}), 400
             
         params = request.json or {}
+        # Proses cepat dengan resolusi rendah untuk preview
         hasil = proses_preview(jenis_aras, teknik, params)  # Fungsi khusus preview
         gambar_base64 = pengolah.gambar_ke_base64(hasil)
         
@@ -1513,7 +1514,7 @@ def preview_gambar(jenis_aras, teknik):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
 @app.route('/histogram_matching', methods=['POST'])
 def histogram_matching():
     """Proses histogram matching dengan gambar target"""
