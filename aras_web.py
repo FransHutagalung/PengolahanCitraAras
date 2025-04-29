@@ -1495,6 +1495,25 @@ def demo_semua_aras():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/preview/<jenis_aras>/<teknik>', methods=['POST'])
+def preview_gambar(jenis_aras, teknik):
+    """Handle preview gambar dengan parameter"""
+    try:
+        if pengolah is None:
+            return jsonify({'error': 'Tidak ada gambar yang diunggah'}), 400
+            
+        params = request.json or {}
+        hasil = proses_preview(jenis_aras, teknik, params)  # Fungsi khusus preview
+        gambar_base64 = pengolah.gambar_ke_base64(hasil)
+        
+        return jsonify({
+            'success': True,
+            'gambar': gambar_base64
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 @app.route('/histogram_matching', methods=['POST'])
 def histogram_matching():
     """Proses histogram matching dengan gambar target"""

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -116,95 +117,6 @@
             margin: 2px;
             font-size: 0.85em;
         }
-
-        .processing-type {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 1rem;
-}
-
-.processing-type:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-    border-color: #4dabf7;
-}
-
-.processing-type::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(77, 171, 247, 0.1));
-    transform: rotate(45deg);
-    transition: all 0.5s ease;
-    opacity: 0;
-}
-
-.processing-type:hover::before {
-    opacity: 1;
-    top: 0;
-    left: 0;
-}
-
-.processing-icon {
-    width: 64px;
-    height: 64px;
-    background: #4dabf7;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.processing-type:hover .processing-icon {
-    background: #228be6;
-    transform: scale(1.05);
-}
-
-.processing-icon i {
-    color: white;
-    font-size: 1.75rem;
-}
-
-.processing-title {
-    color: #2b2d42;
-    margin-bottom: 0.75rem;
-    font-size: 1.15rem;
-    font-weight: 600;
-    transition: color 0.3s ease;
-}
-
-.processing-description {
-    color: #6c757d;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin-bottom: 0;
-    min-height: 60px;
-}
-
-.processing-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(77, 171, 247, 0.1);
-    color: #228be6;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
     </style>
 </head>
 
@@ -229,7 +141,7 @@
             <div class="row mt-3">
                 <div class="col">
                     <div id="originalImage" class="image-container text-center">
-                    
+                        <!-- Original image will be displayed here -->
                     </div>
                 </div>
             </div>
@@ -264,38 +176,20 @@
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <div class="processing-type" onclick="process('titik', 'brightness')">
-                                <span class="processing-badge">Aras Titik</span>
-                                <div class="processing-icon">
-                                    <i class="bi bi-brightness-high"></i>
-                                </div>
-                                <h5 class="processing-title">Brightness</h5>
-                                <p class="processing-description">
-                                    Mengubah tingkat kecerahan pada seluruh piksel citra
-                                </p>
+                                <h5>Brightness</h5>
+                                <p class="small mb-0">Mengubah tingkat kecerahan pada seluruh piksel citra</p>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <div class="processing-type" onclick="process('titik', 'contrast')">
-                                <span class="processing-badge">Aras Titik</span>
-                                <div class="processing-icon">
-                                    <i class="bi bi-contrast"></i>
-                                </div>
-                                <h5 class="processing-title">Contrast</h5>
-                                <p class="processing-description">
-                                    Mengubah rentang intensitas piksel pada citra
-                                </p>
+                                <h5>Contrast</h5>
+                                <p class="small mb-0">Mengubah rentang intensitas piksel pada citra</p>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <div class="processing-type" onclick="process('titik', 'threshold')">
-                                <span class="processing-badge">Aras Titik</span>
-                                <div class="processing-icon">
-                                    <i class="bi bi-contrast"></i>
-                                </div>
-                                <h5 class="processing-title">Threshold</h5>
-                                <p class="processing-description">
-                                    Konversi ke citra biner dengan nilai ambang batas
-                                </p>
+                                <h5>Threshold</h5>
+                                <p class="small mb-0">Konversi ke citra biner dengan nilai ambang batas</p>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
@@ -1098,9 +992,7 @@
                         <img src="data:image/png;base64,${imageData}" class="card-img-top">
                         <div class="card-body">
                             <h5 class="card-title">${getTeknikTitle(currentProcessing.teknik)}</h5>
-                            <div class="explanation">
-  ${formatExplanation(explanation)}
-                                </div>
+                            <div class="explanation">${explanation}</div>
                             <button class="btn btn-sm btn-outline-danger mt-2" 
                                 onclick="document.getElementById('${cardId}').remove()">
                                 <i class="bi bi-trash"></i> Hapus
@@ -1110,13 +1002,6 @@
                 </div>
             `;
             document.getElementById('resultsContainer').insertAdjacentHTML('afterbegin', cardHtml);
-        }
-
-        function formatExplanation(text) {
-            // Convert plain text with line breaks to HTML paragraphs
-            return text.split('\n').map(paragraph => {
-                return `<p>${paragraph.trim()}</p>`;
-            }).join('');
         }
 
         function showAlert(type, message) {

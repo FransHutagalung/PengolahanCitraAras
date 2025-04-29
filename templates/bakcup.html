@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengolahan Citra Digital Beraras</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-explanation {
+            border: 2px solid black;
+        }
+
+        .image-container {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .processing-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .explanation {
+            /* background: #f8f9fa; */
+            /* background-color: red; */
+            width: 280px;
+            text-align: justify;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+        }
+
+        /* Tambahkan di bagian style */
+        .modal-body .form-range {
+            width: 80%;
+            display: inline-block;
+        }
+
+        .modal-body .form-text {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .modal-body input[type="number"] {
+            width: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-5">
+        <h1 class="text-center mb-5">CITRA DIGITAL</h1>
+
+        <!-- Upload Section -->
+        <div class="processing-section">
+            <h2>Upload Gambar</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="file" id="fileInput" class="form-control" accept="image/*">
+                </div>
+                <div class="col-md-6">
+                    <div id="uploadStatus" class="alert alert-info">Belum ada gambar diunggah</div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <div id="originalImage" class="image-container text-center"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="parameterModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Parameter Pengolahan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="parameterForm">
+                            <!-- Dynamic content will be inserted here -->
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary" onclick="submitParameters()">Proses</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Controls -->
+        <div class="processing-section">
+            <h2>Pilih Jenis Pengolahan</h2>
+            <div class="row">
+                <!-- Aras Titik -->
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">Aras Titik</div>
+                        <div class="card-body">
+                            <button class="btn btn-sm btn-outline-primary mb-2 w-100"
+                                onclick="process('titik', 'brightness')">Brightness</button>
+                            <button class="btn btn-sm btn-outline-primary mb-2 w-100"
+                                onclick="process('titik', 'contrast')">Contrast</button>
+                            <button class="btn btn-sm btn-outline-primary mb-2 w-100"
+                                onclick="process('titik', 'threshold')">Threshold</button>
+                            <button class="btn btn-sm btn-outline-primary mb-2 w-100"
+                                onclick="process('titik', 'negative')">Negative</button>
+                            <button class="btn btn-sm btn-outline-primary mb-2 w-100"
+                                onclick="process('titik', 'hist_eq')">Histogram EQ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aras Lokal -->
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">Aras Lokal</div>
+                        <div class="card-body">
+                            <button class="btn btn-sm btn-outline-success mb-2 w-100"
+                                onclick="process('lokal', 'gaussian_blur')">Gaussian Blur</button>
+                            <button class="btn btn-sm btn-outline-success mb-2 w-100"
+                                onclick="process('lokal', 'median_filter')">Median Filter</button>
+                            <button class="btn btn-sm btn-outline-success mb-2 w-100"
+                                onclick="process('lokal', 'sharpening')">Sharpening</button>
+                            <button class="btn btn-sm btn-outline-success mb-2 w-100"
+                                onclick="process('lokal', 'gradient')">Gradient</button>
+                            <button class="btn btn-sm btn-outline-success mb-2 w-100"
+                                onclick="process('lokal', 'adaptive_threshold')">Adaptive Threshold</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aras Global -->
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">Aras Global</div>
+                        <div class="card-body">
+                            <button class="btn btn-sm btn-outline-warning mb-2 w-100"
+                                onclick="process('global', 'fourier')">Fourier</button>
+                            <button class="btn btn-sm btn-outline-warning mb-2 w-100"
+                                onclick="process('global', 'lowpass')">Low Pass</button>
+                            <button class="btn btn-sm btn-outline-warning mb-2 w-100"
+                                onclick="process('global', 'highpass')">High Pass</button>
+                            <input type="file" id="histogramMatchFile" class="d-none" accept="image/*">
+                            <button class="btn btn-sm btn-outline-warning mb-2 w-100"
+                                onclick="document.getElementById('histogramMatchFile').click()">Histogram
+                                Matching</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aras Objek -->
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white">Aras Objek</div>
+                        <div class="card-body">
+                            <button class="btn btn-sm btn-outline-danger mb-2 w-100"
+                                onclick="process('objek', 'kmeans')">K-Means</button>
+                            <button class="btn btn-sm btn-outline-danger mb-2 w-100"
+                                onclick="process('objek', 'components')">Components</button>
+                            <button class="btn btn-sm btn-outline-danger mb-2 w-100"
+                                onclick="process('objek', 'watershed')">Watershed</button>
+                            <button class="btn btn-sm btn-outline-danger mb-2 w-100"
+                                onclick="process('objek', 'contour')">Contour</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="processing-section">
+            <h2>Hasil Pengolahan</h2>
+            <div id="resultsContainer" class="row">
+                <!-- Results will be added here dynamically -->
+            </div>
+        </div>
+
+        <!-- Demo Section -->
+        <div class="processing-section">
+            <h2>Demo Semua Aras</h2>
+            <button class="btn btn-primary" onclick="runFullDemo()">Jalankan Demo Lengkap</button>
+            <div id="demoResults" class="row mt-3"></div>
+        </div>
+    </div>
+
+    <!-- Parameter Modal -->
+    <div class="modal fade" id="parameterModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Parameter Pengolahan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="parameterForm">
+                        <!-- Dynamic content will be inserted here -->
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="submitParameters()">Proses</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+
+
+
+
+        let currentProcessing = { jenis: null, teknik: null };
+
+        // Handle file upload
+        document.getElementById('fileInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('uploadStatus').innerHTML = `
+                        <strong>Gambar berhasil diunggah!</strong><br>
+                        Resolusi: ${data.ukuran[1]}x${data.ukuran[0]} piksel
+                    `;
+                        document.getElementById('originalImage').innerHTML = `
+                        <img src="data:image/png;base64,${data.gambar}" class="image-preview">
+                    `;
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        });
+
+        // Handle processing requests
+        function process(jenis, teknik) {
+            currentProcessing = { jenis, teknik };
+
+            // Show parameter modal if needed
+            const params = getParametersForTechnique(jenis, teknik);
+            if (params.length > 0) {
+                showParameterModal(params);
+            } else {
+                sendProcessingRequest({});
+            }
+        }
+
+        function getParametersForTechnique(jenis, teknik) {
+            const parameters = {
+                'titik': {
+                    'brightness': { name: 'nilai', label: 'Nilai Brightness', type: 'range', min: -255, max: 255, value: 50 },
+                    'contrast': { name: 'alpha', label: 'Faktor Kontras', type: 'range', min: 0.1, max: 3, step: 0.1, value: 1.5 },
+                    'threshold': { name: 'nilai', label: 'Nilai Threshold', type: 'range', min: 0, max: 255, value: 127 }
+                },
+                'lokal': {
+                    'gaussian_blur': { name: 'sigma', label: 'Sigma', type: 'range', min: 0.1, max: 10, step: 0.1, value: 3 },
+                    'median_filter': { name: 'ukuran', label: 'Ukuran Filter', type: 'number', min: 3, max: 15, step: 2, value: 5 },
+                    'sharpening': { name: 'alpha', label: 'Alpha', type: 'range', min: 0.1, max: 3, step: 0.1, value: 1.5 },
+                    'adaptive_threshold': [
+                        { name: 'block_size', label: 'Ukuran Blok', type: 'number', min: 3, max: 31, step: 2, value: 11 },
+                        { name: 'offset', label: 'Offset', type: 'number', min: 0, max: 50, value: 2 }
+                    ]
+                },
+                'global': {
+                    'lowpass': { name: 'radius', label: 'Radius', type: 'range', min: 10, max: 200, value: 50 },
+                    'highpass': { name: 'radius', label: 'Radius', type: 'range', min: 10, max: 200, value: 50 }
+                },
+                'objek': {
+                    'kmeans': { name: 'n_clusters', label: 'Jumlah Cluster', type: 'number', min: 2, max: 10, value: 3 }
+                }
+            };
+
+            return parameters[jenis]?.[teknik] || [];
+        }
+
+
+        function showParameterModal(params) {
+    const form = document.getElementById('parameterForm');
+    form.innerHTML = '';
+
+    if (!Array.isArray(params)) params = [params];
+    
+    params.forEach(param => {
+        const div = document.createElement('div');
+        div.className = 'mb-3';
+        
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = param.label;
+        
+        const input = document.createElement('input');
+        input.className = 'form-control';
+        input.name = param.name;
+        input.type = param.type || 'number';
+        
+        // Set attributes
+        Object.keys(param).forEach(key => {
+            if (['min', 'max', 'step', 'value'].includes(key)) {
+                input[key] = param[key];
+            }
+        });
+
+        // Add real-time value display for range inputs
+        if (input.type === 'range') {
+            const valueDisplay = document.createElement('span');
+            valueDisplay.className = 'ms-2';
+            valueDisplay.textContent = param.value;
+            
+            input.addEventListener('input', (e) => {
+                valueDisplay.textContent = e.target.value;
+            });
+            
+            div.appendChild(label);
+            div.appendChild(input);
+            div.appendChild(valueDisplay);
+        } else {
+            div.appendChild(label);
+            div.appendChild(input);
+        }
+
+        // Add description
+        if (param.desc) {
+            const desc = document.createElement('small');
+            desc.className = 'form-text text-muted';
+            desc.textContent = param.desc;
+            div.appendChild(desc);
+        }
+
+        form.appendChild(div);
+    });
+
+    new bootstrap.Modal(document.getElementById('parameterModal')).show();
+}
+
+function getParametersForTechnique(jenis, teknik) {
+    const parameters = {
+        'titik': {
+            'brightness': {
+                name: 'nilai', 
+                label: 'Nilai Brightness (-255 ke 255)', 
+                type: 'range', 
+                min: -255, 
+                max: 255, 
+                value: 0,
+                desc: 'Atur kecerahan gambar. Nilai positif untuk mencerahkan, negatif untuk menggelapkan'
+            },
+            'contrast': {
+                name: 'alpha', 
+                label: 'Faktor Kontras (0.1 ke 3.0)', 
+                type: 'range', 
+                min: 0.1, 
+                max: 3, 
+                step: 0.1,
+                value: 1.0,
+                desc: 'Atur kontras. >1 untuk meningkatkan kontras, <1 untuk mengurangi'
+            },
+            'threshold': {
+                name: 'nilai', 
+                label: 'Nilai Threshold (0 ke 255)', 
+                type: 'range', 
+                min: 0, 
+                max: 255, 
+                value: 127,
+                desc: 'Nilai ambang batas untuk konversi ke hitam-putih'
+            }
+        },
+        'lokal': {
+            'gaussian_blur': {
+                name: 'sigma', 
+                label: 'Intensitas Blur (0.1 ke 10)', 
+                type: 'range', 
+                min: 0.1, 
+                max: 10, 
+                step: 0.1, 
+                value: 3,
+                desc: 'Mengontrol seberapa kuat efek blur diterapkan'
+            },
+            'median_filter': {
+                name: 'ukuran', 
+                label: 'Ukuran Filter (ganjil)', 
+                type: 'number', 
+                min: 3, 
+                max: 15, 
+                step: 2, 
+                value: 5,
+                desc: 'Harus bilangan ganjil. Ukuran window untuk filter median'
+            }
+        }
+    };
+
+    return parameters[jenis]?.[teknik] || [];
+}
+
+
+        function showParameterModal(params) {
+            const form = document.getElementById('parameterForm');
+            form.innerHTML = '';
+
+            if (!Array.isArray(params)) params = [params];
+
+            params.forEach(param => {
+                const div = document.createElement('div');
+                div.className = 'mb-3';
+
+                const label = document.createElement('label');
+                label.className = 'form-label';
+                label.textContent = param.label;
+
+                const input = document.createElement('input');
+                input.className = 'form-control';
+                input.name = param.name;
+                input.type = param.type || 'number';
+
+                if (param.type === 'range') {
+                    input.className += ' form-range';
+                }
+
+                Object.keys(param).forEach(key => {
+                    if (['min', 'max', 'step', 'value'].includes(key)) {
+                        input[key] = param[key];
+                    }
+                });
+
+                div.appendChild(label);
+                div.appendChild(input);
+                form.appendChild(div);
+            });
+
+            new bootstrap.Modal(document.getElementById('parameterModal')).show();
+        }
+
+        function submitParameters() {
+            const formData = new FormData(document.getElementById('parameterForm'));
+            const params = {};
+            formData.forEach((value, key) => params[key] = value);
+            sendProcessingRequest(params);
+            new bootstrap.Modal(document.getElementById('parameterModal')).hide();
+        }
+
+        /**
+         * Send a request to the server to process the image with the given parameters
+         * 
+         * @param {Object} params Object containing the parameters for the processing technique
+         */
+        function sendProcessingRequest(params) {
+            fetch(`/proses/${currentProcessing.jenis}/${currentProcessing.teknik}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        addResultCard(data.gambar, data.penjelasan);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        }
+
+        function addResultCard(imageData, explanation) {
+    const cardHtml = `
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card card-explanation">
+                <img src="data:image/png;base64,${imageData}" class="card-img-top">
+                <div class="card-body">
+                    <h5 class="card-title">Hasil Pemrosesan</h5>
+                    <div class="explanation">
+                        ${formatExplanation(explanation)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('resultsContainer').insertAdjacentHTML('afterbegin', cardHtml);
+}
+
+function formatExplanation(text) {
+    // Convert plain text with line breaks to HTML paragraphs
+    return text.split('\n').map(paragraph => {
+        return `<p>${paragraph.trim()}</p>`;
+    }).join('');
+}
+
+        // Handle histogram matching
+        document.getElementById('histogramMatchFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/histogram_matching', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        addResultCard(data.gambar, data.penjelasan);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        });
+
+        // Full demo handler
+        function runFullDemo() {
+            fetch('/demo_semua')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const demoResults = document.getElementById('demoResults');
+                        demoResults.innerHTML = '';
+
+                        data.hasil.forEach(demo => {
+                            const demoHtml = `
+                                <div class="col-md-6 mb-4">
+                                    <div class="card">
+                                        <div class="card-header">${demo.judul}</div>
+                                        <img src="data:image/png;base64,${demo.gambar}" class="card-img-top">
+                                        <div class="card-body">
+                                            <div class="explanation">${demo.penjelasan}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            demoResults.insertAdjacentHTML('beforeend', demoHtml);
+                        });
+                    }
+                });
+        }
+
+
+
+    </script>
+</body>
+
+</html>
