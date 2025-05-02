@@ -1115,32 +1115,35 @@
                 });
         }
 
-        // Fungsi yang diperbarui untuk mengirim parameter
         function submitParameters() {
-            const params = collectParameters();
+    const params = collectParameters();
 
-            fetch(`/proses/${currentProcessing.jenis}/${currentProcessing.teknik}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    gambar: originalImageData,
-                    parameters: params
-                })
-            })
-                .then(handleResponse)
-                .then(data => {
-                    if (data.success) {
-                        addResultCard(data.gambar, data.penjelasan);
-                        new bootstrap.Modal(document.getElementById('parameterModal')).hide();
-                    } else {
-                        showAlert('danger', `Error: ${data.error}`);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('danger', `Gagal memproses: ${error.message}`);
-                });
+    fetch(`/proses/${currentProcessing.jenis}/${currentProcessing.teknik}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            gambar: originalImageData,
+            parameters: params
+        })
+    })
+    .then(handleResponse)
+    .then(data => {
+        if (data.success) {
+            addResultCard(data.gambar, data.penjelasan);
+            // Perbaikan: Dapatkan instance modal yang benar
+            const modal = bootstrap.Modal.getInstance(document.getElementById('parameterModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } else {
+            showAlert('danger', `Error: ${data.error}`);
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', `Gagal memproses: ${error.message}`);
+    });
+}
 
         // Fungsi untuk menangani error
         function handleError(error) {
