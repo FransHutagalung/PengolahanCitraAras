@@ -22,18 +22,9 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 # Konfigurasi matplotlib untuk menyimpan plot sebagai gambar untuk web
 plt.switch_backend('Agg')
 
+
 class PembelajaranPengolahanCitra:
     def __init__(self, gambar_input=None, is_path=True):
-        """
-        Inisialisasi kelas pembelajaran pengolahan citra
-        
-        Parameters:
-        -----------
-        gambar_input : str atau numpy.ndarray
-            Path gambar atau array gambar yang akan diproses
-        is_path : bool
-            True jika gambar_input adalah path file, False jika numpy array
-        """
         if gambar_input is not None:
             if is_path:
                 self.gambar_original = cv2.imread(gambar_input)
@@ -41,7 +32,11 @@ class PembelajaranPengolahanCitra:
                     raise FileNotFoundError(f"Gambar tidak ditemukan: {gambar_input}")
                 self.gambar_path = gambar_input
             else:
-                self.gambar_original = gambar_input
+                # Handle grayscale (2D) images
+                if len(gambar_input.shape) == 2:
+                    self.gambar_original = cv2.cvtColor(gambar_input, cv2.COLOR_GRAY2BGR)
+                else:
+                    self.gambar_original = gambar_input
                 self.gambar_path = None
             
             # Konversi BGR ke RGB untuk matplotlib
@@ -58,7 +53,7 @@ class PembelajaranPengolahanCitra:
             self.gambar_gray = None
             self.gambar_path = None
             self.langkah_terakhir = "Belum ada gambar yang dimuat"
-    
+        
     def muat_gambar(self, gambar_path):
         """
         Muat gambar dari path
@@ -1454,24 +1449,27 @@ def demo_semua_aras():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
+    
 @app.route('/preview/<jenis_aras>/<teknik>', methods=['POST'])
 def preview_gambar(jenis_aras, teknik):
     try:
         if pengolah is None:
             return jsonify({'error': 'Tidak ada gambar yang diunggah'}), 400
-        
-        # Ambil parameter dari request
+
         data = request.json
         parameters = data.get('parameters', {})
-        gambar_input = data.get('gambar')  # Base64 gambar asli
-        
+        gambar_input = data.get('gambar')
+
+        if ',' in gambar_input:
+            header, image_data = gambar_input.split(',', 1)
+        else:
+            image_data = gambar_input
+
         # Decode gambar dari base64
-        gambar_bytes = base64.b64decode(gambar_input)
+        gambar_bytes = base64.b64decode(image_data)
         nparr = np.frombuffer(gambar_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
-        # Proses gambar sesuai teknik dan parameter
         if jenis_aras == 'titik':
             if teknik == 'brightness':
                 nilai = parameters.get('nilai', 0)
@@ -1479,17 +1477,34 @@ def preview_gambar(jenis_aras, teknik):
             elif teknik == 'contrast':
                 alpha = parameters.get('alpha', 1.0)
                 hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_titik_contrast(alpha)
-            # Tambahkan teknik lain sesuai kebutuhan
+            elif teknik == 'threshold':
+                print('threshold')
+                nilai = int(parameters.get('nilai', 127))
+                hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_titik_threshold(nilai)
+                # judul = f"Threshold (nilai={nilai})"
+            elif teknik == 'negative':
+                hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_titik_negative()
+                # judul = "Negative Image"
+            elif teknik == 'hist_eq':
+                hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_titik_histogram_equalization()
             else:
                 return jsonify({'error': 'Teknik tidak dikenal'}), 400
         else:
             # Proses untuk jenis aras lainnya
             pass
         
+        # Konversi hasil ke RGB jika diperlukan
+        if len(hasil.shape) == 2:
+            hasil = cv2.cvtColor(hasil, cv2.COLOR_GRAY2RGB)
+        
         # Buat buffer gambar hasil
-        pengolah_preview = PembelajaranPengolahanCitra(hasil, is_path=False)
-        buf = pengolah_preview.tampilkan_gambar([hasil], ["Preview"])
-        gambar_base64 = pengolah_preview.gambar_ke_base64(buf)
+        buf = io.BytesIO()
+        plt.imshow(hasil)
+        plt.axis('off')
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+        plt.close()
+        buf.seek(0)
+        gambar_base64 = base64.b64encode(buf.read()).decode('utf-8')
         
         return jsonify({
             'success': True,
@@ -1498,6 +1513,7 @@ def preview_gambar(jenis_aras, teknik):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/histogram_matching', methods=['POST'])
 def histogram_matching():
