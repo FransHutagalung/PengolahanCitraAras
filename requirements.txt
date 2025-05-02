@@ -1,12 +1,8 @@
-# Core dependencies
-opencv-python>=4.5.4.60         # OpenCV untuk pengolahan citra dasar
-numpy>=1.21.5                   # Operasi array numerik
-matplotlib>=3.5.1               # Visualisasi gambar dan plot
-scikit-image>=0.19.2            # Algoritma pengolahan citra lanjut
-scikit-learn>=1.0.2             # Untuk algoritma K-Means clustering
-scipy>=1.7.3                    # Operasi ilmiah dan pengolahan citra
-flask>=2.0.3                    # Web framework
-
-# Optional (untuk beberapa fitur tambahan)
-pillow>=9.0.1                   # Penanganan gambar alternatif
-imageio>=2.16.1                 # Membaca/menulis berbagai format gambar
+flask
+opencv-python-headless
+numpy
+matplotlib
+scikit-image
+scikit-learn
+scipy
+gunicorn
