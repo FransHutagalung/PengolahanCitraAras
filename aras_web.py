@@ -186,21 +186,21 @@ class PembelajaranPengolahanCitra:
         # Proses brightness adjustment
         hasil = np.clip(self.gambar_rgb.astype(np.int16) + nilai, 0, 255).astype(np.uint8)
         return hasil
-    
+
     def aras_titik_contrast(self, alpha=1.5):
         """
         Mengubah kontras gambar (operasi titik)
         
         Penjelasan Teknis:
         ------------------
-        Operasi aras titik dengan contrast bekerja dengan mengalikan nilai piksel
-        dengan suatu faktor skala. Nilai piksel gelap menjadi lebih gelap dan
-        piksel terang menjadi lebih terang.
+        Operasi aras titik dengan contrast bekerja dengan mengatur ulang rentang nilai piksel
+        relatif terhadap nilai tengah. Ini memperbesar perbedaan antara piksel gelap dan terang.
         
         Langkah-langkah:
-        1. Kalikan setiap piksel dengan nilai alpha
-        2. Clip nilai piksel ke rentang [0,255]
-        3. Konversi ke tipe data uint8
+        1. Hitung nilai tengah intensitas (128 atau rata-rata gambar)
+        2. Untuk setiap piksel, terapkan: new_pixel = mid + alpha * (old_pixel - mid)
+        3. Clip nilai piksel ke rentang [0,255]
+        4. Konversi ke tipe data uint8
         
         Parameters:
         -----------
@@ -215,15 +215,20 @@ class PembelajaranPengolahanCitra:
         # Simpan langkah proses
         self.langkah_terakhir = f"""
         Proses Contrast Adjustment (Aras Titik):
-        1. Setiap piksel dikalikan dengan faktor alpha {alpha}
-        2. Nilai hasil dibatasi (clipping) antara 0-255
-        3. Konversi ke tipe data uint8 standar untuk gambar
+        1. Hitung nilai tengah intensitas (128)
+        2. Untuk setiap piksel, hitung jarak dari nilai tengah
+        3. Kalikan jarak tersebut dengan faktor alpha {alpha}
+        4. Tambahkan kembali nilai tengah
+        5. Nilai hasil dibatasi (clipping) antara 0-255
+        6. Konversi ke tipe data uint8 standar untuk gambar
         """
         
-        # Proses contrast adjustment
-        hasil = np.clip(alpha * self.gambar_rgb, 0, 255).astype(np.uint8)
+        # Proses contrast adjustment yang benar
+        # Gunakan nilai tengah 128 untuk RGB
+        mid = 128
+        hasil = np.clip(mid + alpha * (self.gambar_rgb.astype(np.float32) - mid), 0, 255).astype(np.uint8)
         return hasil
-    
+
     def aras_titik_threshold(self, nilai=127):
         """
         Thresholding pada gambar grayscale (operasi titik)
@@ -259,10 +264,16 @@ class PembelajaranPengolahanCitra:
         4. Hasilnya adalah citra biner hitam-putih
         """
         
-        # Proses thresholding
-        _, hasil = cv2.threshold(self.gambar_gray, nilai, 255, cv2.THRESH_BINARY)
+        # Pastikan kita bekerja dengan gambar grayscale
+        if len(self.gambar_gray.shape) > 2:
+            gray = cv2.cvtColor(self.gambar_gray, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = self.gambar_gray
+            
+        # Proses thresholding yang lebih efisien
+        _, hasil = cv2.threshold(gray, nilai, 255, cv2.THRESH_BINARY)
         return hasil
-    
+
     def aras_titik_negative(self):
         """
         Menghasilkan gambar negatif (operasi titik)
@@ -291,7 +302,7 @@ class PembelajaranPengolahanCitra:
         
         # Proses inversi (negative)
         return 255 - self.gambar_rgb
-    
+
     def aras_titik_histogram_equalization(self):
         """
         Ekualisasi histogram untuk meningkatkan kontras (operasi titik)
@@ -323,77 +334,31 @@ class PembelajaranPengolahanCitra:
         5. Hasilnya adalah gambar dengan distribusi nilai piksel yang lebih merata dan kontras lebih baik
         """
         
-        # Proses histogram equalization
+        # Proses histogram equalization yang lebih baik dengan CLAHE
+        # (Contrast Limited Adaptive Histogram Equalization)
         hasil = self.gambar_rgb.copy()
-        for i in range(3):
-            hasil[:,:,i] = cv2.equalizeHist(self.gambar_rgb[:,:,i])
+        
+        # Konversi ke LAB untuk memisahkan lightness (L) dari komponen warna
+        if len(self.gambar_rgb.shape) == 3:
+            lab = cv2.cvtColor(self.gambar_rgb, cv2.COLOR_BGR2LAB)
+            l, a, b = cv2.split(lab)
+            
+            # Terapkan CLAHE pada channel L saja
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            cl = clahe.apply(l)
+            
+            # Gabungkan kembali
+            limg = cv2.merge((cl, a, b))
+            hasil = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+        else:
+            # Untuk gambar grayscale
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            hasil = clahe.apply(self.gambar_rgb)
+        
         return hasil
-    
-    def demo_aras_titik(self):
-        """
-        Demo dan visualisasi semua operasi aras titik
-        
-        Returns:
-        --------
-        io.BytesIO
-            Buffer yang berisi visualisasi gambar
-        str
-            Penjelasan proses
-        """
-        # Proses gambar
-        gambar_brightness = self.aras_titik_brightness(50)
-        gambar_contrast = self.aras_titik_contrast(1.5)
-        gambar_negative = self.aras_titik_negative()
-        gambar_threshold = self.aras_titik_threshold(127)
-        gambar_histeq = self.aras_titik_histogram_equalization()
-        
-        # Penjelasan tahapan untuk setiap gambar
-        tahapan = [
-            "Gambar asli tanpa pemrosesan",
-            "Nilai setiap piksel ditambah 50, sehingga gambar lebih cerah",
-            "Nilai setiap piksel dikalikan 1.5, meningkatkan kontras",
-            "Nilai setiap piksel diinversi: 255 - nilai_piksel",
-            "Piksel > 127 menjadi putih (255), piksel <= 127 menjadi hitam (0)",
-            "Distribusi nilai piksel diratakan untuk meningkatkan kontras"
-        ]
-        
-        # Tampilkan gambar dengan penjelasan
-        buf = self.tampilkan_gambar(
-            [self.gambar_rgb, gambar_brightness, gambar_contrast, gambar_negative, gambar_threshold, gambar_histeq],
-            ["Original", "Brightness +50", "Contrast 1.5x", "Negative", "Threshold", "Hist. Equalization"],
-            (20, 6),
-            tahapan
-        )
-        
-        # Penjelasan teori aras titik
-        penjelasan = """
-        <h3>Aras Titik (Point Processing)</h3>
-        <p>Pengolahan citra aras titik bekerja dengan memodifikasi nilai piksel secara individual tanpa mempertimbangkan
-        piksel tetangga. Setiap piksel diproses secara independen dengan fungsi transformasi yang sama.</p>
-        
-        <h4>Karakteristik Aras Titik:</h4>
-        <ul>
-            <li>Bekerja pada piksel tunggal</li>
-            <li>Tidak mempertimbangkan piksel tetangga</li>
-            <li>Fungsi transformasi yang sama diterapkan pada semua piksel</li>
-            <li>Operasi relatif cepat karena sederhana</li>
-        </ul>
-        
-        <h4>Contoh Operasi Aras Titik:</h4>
-        <ul>
-            <li><strong>Brightness:</strong> Menambah atau mengurangi nilai piksel dengan konstanta</li>
-            <li><strong>Contrast:</strong> Mengalikan nilai piksel dengan faktor skala</li>
-            <li><strong>Thresholding:</strong> Mengubah gambar menjadi hitam-putih berdasarkan nilai ambang</li>
-            <li><strong>Negative:</strong> Membalikkan nilai piksel untuk membuat gambar negatif</li>
-            <li><strong>Histogram Equalization:</strong> Meratakan distribusi nilai piksel untuk meningkatkan kontras</li>
-        </ul>
-        
-        <p>Rumus umum: g(x,y) = T[f(x,y)] dimana f adalah nilai piksel input, T adalah fungsi transformasi, dan g adalah nilai piksel output.</p>
-        """
-        
-        return buf, penjelasan
-    
-    # ===== ARAS LOKAL =====
+
+    ### PERBAIKAN ARAS LOKAL ###
+
     def aras_lokal_gaussian_blur(self, sigma=3):
         """
         Gaussian blur untuk menghaluskan gambar (operasi lokal)
@@ -427,9 +392,14 @@ class PembelajaranPengolahanCitra:
         4. Piksel pada pusat kernel memiliki bobot lebih besar, semakin jauh bobot semakin kecil
         """
         
-        # Proses gaussian blur
-        return cv2.GaussianBlur(self.gambar_rgb, (0, 0), sigma)
-    
+        # Proses gaussian blur dengan ukuran kernel yang lebih optimal
+        # Ukuran kernel sebaiknya ~= 6*sigma
+        ksize = int(6 * sigma + 1)
+        if ksize % 2 == 0:  # Pastikan ukuran kernel ganjil
+            ksize += 1
+            
+        return cv2.GaussianBlur(self.gambar_rgb, (ksize, ksize), sigma)
+
     def aras_lokal_median_filter(self, ukuran=5):
         """
         Median filter untuk mengurangi noise (operasi lokal)
@@ -466,9 +436,13 @@ class PembelajaranPengolahanCitra:
         5. Filter ini baik untuk menghilangkan noise "salt and pepper"
         """
         
+        # Pastikan ukuran ganjil
+        if ukuran % 2 == 0:
+            ukuran += 1
+            
         # Proses median filter
         return cv2.medianBlur(self.gambar_rgb, ukuran)
-    
+
     def aras_lokal_sharpening(self, alpha=1.5):
         """
         Penajaman gambar dengan unsharp masking (operasi lokal)
@@ -497,16 +471,20 @@ class PembelajaranPengolahanCitra:
         # Simpan langkah proses
         self.langkah_terakhir = f"""
         Proses Image Sharpening (Aras Lokal):
-        1. Blur gambar asli dengan Gaussian blur untuk mendapatkan versi halus
+        1. Blur gambar asli dengan Gaussian blur (sigma=3) untuk mendapatkan versi halus
         2. Hitung "mask" = gambar_asli - gambar_blur (berisi detail tajam)
         3. Kalikan mask dengan faktor alpha={alpha} untuk mengontrol tingkat penajaman
         4. Tambahkan mask yang sudah diskala ke gambar asli: gambar_tajam = gambar_asli + alpha*mask
         """
         
-        # Proses sharpening
-        blur = cv2.GaussianBlur(self.gambar_rgb, (0, 0), 3)
-        return cv2.addWeighted(self.gambar_rgb, 1.0 + alpha, blur, -alpha, 0)
-    
+        # Perbaikan proses sharpening
+        # Gunakan sigma yang lebih kecil untuk blur dan implementasi unsharp mask yang benar
+        sigma = 3
+        blur = cv2.GaussianBlur(self.gambar_rgb, (0, 0), sigma)
+        mask = cv2.subtract(self.gambar_rgb, blur)
+        sharpened = cv2.addWeighted(self.gambar_rgb, 1.0, mask, alpha, 0)
+        return sharpened
+
     def aras_lokal_gradient(self):
         """
         Deteksi tepi dengan gradient Sobel (operasi lokal)
@@ -531,25 +509,33 @@ class PembelajaranPengolahanCitra:
         self.langkah_terakhir = """
         Proses Edge Detection dengan Gradient Sobel (Aras Lokal):
         1. Hitung gradient pada arah x dengan operator Sobel-x
-           Kernel Sobel-x: [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+        Kernel Sobel-x: [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
         2. Hitung gradient pada arah y dengan operator Sobel-y
-           Kernel Sobel-y: [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
-        3. Konversi ke nilai absolut (magnitude)
-        4. Gabungkan gradient x dan y dengan rata-rata tertimbang
+        Kernel Sobel-y: [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
+        3. Hitung magnitude gradient: sqrt(grad_x^2 + grad_y^2)
+        4. Normalisasi hasil ke rentang 0-255
         5. Piksel dengan nilai tinggi menunjukkan tepi (perubahan intensitas yang tajam)
         """
         
-        # Proses gradient detection
-        grad_x = cv2.Sobel(self.gambar_gray, cv2.CV_64F, 1, 0, ksize=3)
-        grad_y = cv2.Sobel(self.gambar_gray, cv2.CV_64F, 0, 1, ksize=3)
+        # Proses gradient detection yang lebih akurat dengan magnitude gradient
+        # Pastikan kita bekerja dengan gambar grayscale
+        if len(self.gambar_gray.shape) > 2:
+            gray = cv2.cvtColor(self.gambar_gray, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = self.gambar_gray
         
-        # Konversi ke nilai absolut dan gabungkan
-        abs_grad_x = cv2.convertScaleAbs(grad_x)
-        abs_grad_y = cv2.convertScaleAbs(grad_y)
+        # Compute gradients
+        grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+        grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
         
-        grad = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
-        return grad
-    
+        # Compute magnitude properly
+        magnitude = np.sqrt(grad_x**2 + grad_y**2)
+        
+        # Normalize to 0-255
+        magnitude = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+        
+        return magnitude
+
     def aras_lokal_adaptive_threshold(self, block_size=11, offset=2):
         """
         Adaptive threshold untuk segmentasi (operasi lokal)
@@ -587,77 +573,27 @@ class PembelajaranPengolahanCitra:
         5. Threshold adaptif menangani variasi pencahayaan lebih baik daripada threshold global
         """
         
+        # Pastikan block_size ganjil dan cukup besar
+        if block_size % 2 == 0:
+            block_size += 1
+        
+        if block_size < 3:
+            block_size = 3
+            
+        # Pastikan kita bekerja dengan gambar grayscale
+        if len(self.gambar_gray.shape) > 2:
+            gray = cv2.cvtColor(self.gambar_gray, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = self.gambar_gray
+            
         # Proses adaptive threshold
         return cv2.adaptiveThreshold(
-            self.gambar_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
             cv2.THRESH_BINARY, block_size, offset
         )
-    
-    def demo_aras_lokal(self):
-        """
-        Demo dan visualisasi semua operasi aras lokal
-        
-        Returns:
-        --------
-        io.BytesIO
-            Buffer yang berisi visualisasi gambar
-        str
-            Penjelasan proses
-        """
-        # Proses gambar
-        gambar_blur = self.aras_lokal_gaussian_blur(3)
-        gambar_median = self.aras_lokal_median_filter(5)
-        gambar_sharp = self.aras_lokal_sharpening(1.5)
-        gambar_gradient = self.aras_lokal_gradient()
-        gambar_adaptive = self.aras_lokal_adaptive_threshold()
-        
-        # Penjelasan tahapan untuk setiap gambar
-        tahapan = [
-            "Gambar asli tanpa pemrosesan",
-            "Filter Gaussian dengan sigma=3 menghaluskan gambar dengan rata-rata tertimbang piksel tetangga",
-            "Median filter dengan window 5x5 mengganti piksel dengan nilai median dari tetangga",
-            "Unsharp masking menambah detail (gambar asli - versi blur) ke gambar asli untuk mempertajam",
-            "Operator Sobel menghitung gradient (perubahan intensitas) untuk deteksi tepi",
-            "Threshold adaptive menentukan nilai threshold berdasarkan statistik lokal area 11x11"
-        ]
-        
-        # Tampilkan gambar dengan penjelasan
-        buf = self.tampilkan_gambar(
-            [self.gambar_rgb, gambar_blur, gambar_median, gambar_sharp, gambar_gradient, gambar_adaptive],
-            ["Original", "Gaussian Blur", "Median Filter", "Sharpening", "Gradient (Sobel)", "Adaptive Threshold"],
-            (20, 6),
-            tahapan
-        )
-        
-        # Penjelasan teori aras lokal
-        penjelasan = """
-        <h3>Aras Lokal (Local Processing)</h3>
-        <p>Pengolahan citra aras lokal melibatkan analisis dan transformasi nilai piksel berdasarkan nilai
-        piksel tetangga di sekitarnya. Biasanya menggunakan operasi konvolusi dengan berbagai kernel.</p>
-        
-        <h4>Karakteristik Aras Lokal:</h4>
-        <ul>
-            <li>Mempertimbangkan piksel tetangga dalam pemrosesan</li>
-            <li>Menggunakan kernel atau mask konvolusi</li>
-            <li>Dapat mendeteksi atau meningkatkan fitur spasial seperti tepi</li>
-            <li>Lebih komputasional dibanding aras titik</li>
-        </ul>
-        
-        <h4>Contoh Operasi Aras Lokal:</h4>
-        <ul>
-            <li><strong>Gaussian Blur:</strong> Menghaluskan gambar dengan filter Gaussian</li>
-            <li><strong>Median Filter:</strong> Mengurangi noise dengan mengganti piksel dengan nilai median tetangga</li>
-            <li><strong>Image Sharpening:</strong> Mempertajam detail dengan unsharp masking</li>
-            <li><strong>Edge Detection:</strong> Mendeteksi tepi dengan operator gradient seperti Sobel</li>
-            <li><strong>Adaptive Threshold:</strong> Threshold dengan nilai ambang yang berubah sesuai area lokal</li>
-        </ul>
-        
-        <p>Konsep dasar: konvolusi antara citra input f(x,y) dengan kernel konvolusi h(x,y) menghasilkan citra output g(x,y).</p>
-        """
-        
-        return buf, penjelasan
-    
-    # ===== ARAS GLOBAL =====
+
+    ### PERBAIKAN ARAS GLOBAL ###
+
     def aras_global_fourier_transform(self):
         """
         Transformasi Fourier untuk melihat domain frekuensi (operasi global)
@@ -690,13 +626,27 @@ class PembelajaranPengolahanCitra:
         6. Tepi spektrum mewakili frekuensi tinggi (detail halus, tepi)
         """
         
-        # Proses Fourier Transform
-        f_transform = np.fft.fft2(self.gambar_gray)
+        # Pastikan kita bekerja dengan gambar grayscale
+        if len(self.gambar_gray.shape) > 2:
+            gray = cv2.cvtColor(self.gambar_gray, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = self.gambar_gray
+        
+        # Proses Fourier Transform dengan padding ke ukuran optimal untuk FFT (2^n)
+        # Ini meningkatkan kecepatan komputasi
+        h, w = gray.shape
+        optimal_h = cv2.getOptimalDFTSize(h)
+        optimal_w = cv2.getOptimalDFTSize(w)
+        padded = cv2.copyMakeBorder(gray, 0, optimal_h - h, 0, optimal_w - w, cv2.BORDER_CONSTANT, value=0)
+        
+        f_transform = np.fft.fft2(padded)
         f_shift = np.fft.fftshift(f_transform)
         magnitude_spectrum = 20 * np.log(np.abs(f_shift) + 1)
-        magnitude_spectrum = np.asarray(magnitude_spectrum, dtype=np.uint8)
-        return magnitude_spectrum
-    
+        
+        # Normalisasi ke 0-255 untuk visualisasi yang lebih baik
+        magnitude_normalized = cv2.normalize(magnitude_spectrum, None, 0, 255, cv2.NORM_MINMAX)
+        return magnitude_normalized.astype(np.uint8)
+
     def aras_global_low_pass_filter(self, radius=50):
         """
         Low-pass filter dalam domain frekuensi (operasi global)
@@ -735,17 +685,27 @@ class PembelajaranPengolahanCitra:
         8. Hasilnya adalah gambar yang lebih halus (blur)
         """
         
-        # Proses Low Pass Filter
-        rows, cols = self.gambar_gray.shape
+        # Pastikan kita bekerja dengan gambar grayscale
+        if len(self.gambar_gray.shape) > 2:
+            gray = cv2.cvtColor(self.gambar_gray, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = self.gambar_gray
+        
+        # Perbaikan proses Low Pass Filter dengan transisi halus
+        rows, cols = gray.shape
         crow, ccol = rows // 2, cols // 2
         
         # Transformasi Fourier
-        f_transform = np.fft.fft2(self.gambar_gray)
+        f_transform = np.fft.fft2(gray)
         f_shift = np.fft.fftshift(f_transform)
         
-        # Buat mask
-        mask = np.zeros((rows, cols), np.uint8)
-        cv2.circle(mask, (ccol, crow), radius, 1, -1)
+        # Buat mask dengan transisi halus (Gaussian low-pass)
+        mask = np.zeros((rows, cols), np.float32)
+        for i in range(rows):
+            for j in range(cols):
+                d = np.sqrt((i - crow)**2 + (j - ccol)**2)
+                # Gaussian low-pass filter
+                mask[i, j] = np.exp(-(d**2) / (2 * (radius**2)))
         
         # Filter dan inverse transform
         f_shift_filtered = f_shift * mask
@@ -1350,7 +1310,7 @@ def proses_gambar(jenis_aras, teknik):
                 hasil = pengolah.aras_titik_brightness(nilai)
                 judul = f"Brightness Adjustment ({nilai})"
             elif teknik == 'contrast':
-                alpha = float(params.get('alpha', 1.5))
+                alpha = float(params.get('alpha', 2.4))
                 hasil = pengolah.aras_titik_contrast(alpha)
                 judul = f"Contrast Adjustment ({alpha}x)"
             elif teknik == 'threshold':
