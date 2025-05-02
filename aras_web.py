@@ -1497,15 +1497,39 @@ def demo_semua_aras():
 
 @app.route('/preview/<jenis_aras>/<teknik>', methods=['POST'])
 def preview_gambar(jenis_aras, teknik):
-    """Handle preview gambar dengan parameter"""
     try:
         if pengolah is None:
             return jsonify({'error': 'Tidak ada gambar yang diunggah'}), 400
-            
-        params = request.json or {}
-        # Proses cepat dengan resolusi rendah untuk preview
-        hasil = proses_preview(jenis_aras, teknik, params)  # Fungsi khusus preview
-        gambar_base64 = pengolah.gambar_ke_base64(hasil)
+        
+        # Ambil parameter dari request
+        data = request.json
+        parameters = data.get('parameters', {})
+        gambar_input = data.get('gambar')  # Base64 gambar asli
+        
+        # Decode gambar dari base64
+        gambar_bytes = base64.b64decode(gambar_input)
+        nparr = np.frombuffer(gambar_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        # Proses gambar sesuai teknik dan parameter
+        if jenis_aras == 'titik':
+            if teknik == 'brightness':
+                nilai = parameters.get('nilai', 0)
+                hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_titik_brightness(nilai)
+            elif teknik == 'contrast':
+                alpha = parameters.get('alpha', 1.0)
+                hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_titik_contrast(alpha)
+            # Tambahkan teknik lain sesuai kebutuhan
+            else:
+                return jsonify({'error': 'Teknik tidak dikenal'}), 400
+        else:
+            # Proses untuk jenis aras lainnya
+            pass
+        
+        # Buat buffer gambar hasil
+        pengolah_preview = PembelajaranPengolahanCitra(hasil, is_path=False)
+        buf = pengolah_preview.tampilkan_gambar([hasil], ["Preview"])
+        gambar_base64 = pengolah_preview.gambar_ke_base64(buf)
         
         return jsonify({
             'success': True,
