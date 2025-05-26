@@ -878,7 +878,6 @@ class PembelajaranPengolahanCitra:
             "High-pass filter mempertahankan frekuensi tinggi (tepi) dan membuang frekuensi rendah"
         ]
         
-        # Tambahkan histogram matching jika gambar target disediakan
         if target_gambar is not None:
             try:
                 gambar_matched = self.aras_global_histogram_matching(target_gambar)
@@ -1006,20 +1005,15 @@ class PembelajaranPengolahanCitra:
         4. Visualisasikan setiap component dengan warna berbeda
         """
         
-        # Konversi ke binary image
         _, binary = cv2.threshold(self.gambar_gray, 0, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
         
-        # Analisis connected components
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
         
-        # Buat gambar output dengan warna
         output = np.zeros((labels.shape[0], labels.shape[1], 3), dtype=np.uint8)
-        
-        # Warnai tiap komponen dengan warna berbeda
+     
         np.random.seed(42)  # Untuk konsistensi warna
-        for i in range(1, num_labels):  # Skip label 0 (background)
+        for i in range(1, num_labels):  
             mask = labels == i
-            # Buat warna random untuk tiap komponen
             color = np.random.randint(0, 255, size=3)
             output[mask] = color
         
@@ -1470,6 +1464,8 @@ def preview_gambar(jenis_aras, teknik):
         nparr = np.frombuffer(gambar_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
+        
+        
         if jenis_aras == 'titik':
             if teknik == 'brightness':
                 nilai = parameters.get('nilai', 0)
@@ -1487,6 +1483,27 @@ def preview_gambar(jenis_aras, teknik):
                 # judul = "Negative Image"
             elif teknik == 'hist_eq':
                 hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_titik_histogram_equalization()
+            else:
+                return jsonify({'error': 'Teknik tidak dikenal'}), 400
+        elif jenis_aras == 'lokal':
+            if teknik == 'gaussian_blur':
+                sigma = parameters.get('nilai', 0)
+                hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_lokal_gaussian_blur(sigma)
+            elif teknik == 'median_filter':
+                nilai = parameters.get('nilai', 0)
+                hasil = PembelajaranPengolahanCitra(img, is_path=False).aras_lokal_median_filter(nilai)
+            elif teknik == 'sharpening':
+                alpha = float(params.get('alpha', 1.5))
+                hasil = pengolah.aras_lokal_sharpening(alpha)
+                judul = f"Sharpening (alpha={alpha})"
+            elif teknik == 'gradient':
+                hasil = pengolah.aras_lokal_gradient()
+                judul = "Gradient (Sobel)"
+            elif teknik == 'adaptive_threshold':
+                block_size = int(params.get('block_size', 11))
+                offset = int(params.get('offset', 2))
+                hasil = pengolah.aras_lokal_adaptive_threshold(block_size, offset)
+                judul = f"Adaptive Threshold (block={block_size}, offset={offset})"
             else:
                 return jsonify({'error': 'Teknik tidak dikenal'}), 400
         else:

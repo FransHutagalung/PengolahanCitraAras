@@ -5,4 +5,7 @@ matplotlib
 scikit-image
 scikit-learn
 scipy
+pillow
 gunicorn
+seaborn
+tkintertable
